@@ -3,6 +3,17 @@
 ### About
 Every individual has their own dialects or mannerisms in which they speak. This project revolves around the detection of backgrounds of every individual using their speeches. The goal in this project is to classify various types of accents, specifically foreign accents, by the native language of the speaker. This project allows to detect the demographic and linguistic backgrounds of the speakers by comparing different speech outputs with the speech accent archive dataset in order to determine which variables are key predictors of each accent. The speech accent archive demonstrates that accents are systematic rather than merely mistaken speech. Given a recording of a speaker speaking a known script of English words, this project predicts the speaker’s native language.
 
+### Packages
+conda create -n speech python=3.6 numpy beautifulsoup4
+conda activate speech
+pip
+pip install Keras
+pip install beautifulsoup4
+pip install pydub
+pip install scikit-learn
+pip install librosa
+pip install pandas
+
 ### Dataset
 All of the speech files used for this project come from the Speech Accent Archive, a repository of spoken English hosted by George Mason University. Over 2000 speakers representing over 100 native languages read a common elicitation paragraph in English:
 

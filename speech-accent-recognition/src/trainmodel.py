@@ -1,6 +1,7 @@
 import pandas as pd
 from collections import Counter
 import sys
+
 sys.path.append('../speech-accent-recognition/src>')
 import getsplit
 
@@ -23,7 +24,8 @@ SILENCE_THRESHOLD = .01
 RATE = 24000
 N_MFCC = 13
 COL_SIZE = 30
-EPOCHS = 10 #35#250
+EPOCHS = 10  # 35#250
+
 
 def to_categorical(y):
     '''
@@ -32,10 +34,11 @@ def to_categorical(y):
     :return (numpy array): binary class matrix
     '''
     lang_dict = {}
-    for index,language in enumerate(set(y)):
+    for index, language in enumerate(set(y)):
         lang_dict[language] = index
-    y = list(map(lambda x: lang_dict[x],y))
+    y = list(map(lambda x: lang_dict[x], y))
     return utils.to_categorical(y, len(lang_dict))
+
 
 def get_wav(language_num):
     '''
@@ -45,7 +48,8 @@ def get_wav(language_num):
     '''
 
     y, sr = librosa.load('../audio/{}.wav'.format(language_num))
-    return(librosa.core.resample(y=y,orig_sr=sr,target_sr=RATE, scale=True))
+    return (librosa.core.resample(y=y, orig_sr=sr, target_sr=RATE, scale=True))
+
 
 def to_mfcc(wav):
     '''
@@ -53,7 +57,8 @@ def to_mfcc(wav):
     :param wav (numpy array): Wav form
     :return (2d numpy array: MFCC
     '''
-    return(librosa.feature.mfcc(y=wav, sr=RATE, n_mfcc=N_MFCC))
+    return (librosa.feature.mfcc(y=wav, sr=RATE, n_mfcc=N_MFCC))
+
 
 def remove_silence(wav, thresh=0.04, chunk=5000):
     '''
@@ -70,7 +75,8 @@ def remove_silence(wav, thresh=0.04, chunk=5000):
             tf_list.extend([False] * chunk)
 
     tf_list.extend((len(wav) - len(tf_list)) * [False])
-    return(wav[tf_list])
+    return (wav[tf_list])
+
 
 def normalize_mfcc(mfcc):
     '''
@@ -79,9 +85,10 @@ def normalize_mfcc(mfcc):
     :return:
     '''
     mms = MinMaxScaler()
-    return(mms.fit_transform(np.abs(mfcc)))
+    return (mms.fit_transform(np.abs(mfcc)))
 
-def make_segments(mfccs,labels):
+
+def make_segments(mfccs, labels):
     '''
     Makes segments of mfccs and attaches them to the labels
     :param mfccs: list of mfccs
@@ -90,11 +97,12 @@ def make_segments(mfccs,labels):
     '''
     segments = []
     seg_labels = []
-    for mfcc,label in zip(mfccs,labels):
+    for mfcc, label in zip(mfccs, labels):
         for start in range(0, int(mfcc.shape[1] / COL_SIZE)):
             segments.append(mfcc[:, start * COL_SIZE:(start + 1) * COL_SIZE])
             seg_labels.append(label)
-    return(segments, seg_labels)
+    return (segments, seg_labels)
+
 
 def segment_one(mfcc):
     '''
@@ -105,7 +113,8 @@ def segment_one(mfcc):
     segments = []
     for start in range(0, int(mfcc.shape[1] / COL_SIZE)):
         segments.append(mfcc[:, start * COL_SIZE:(start + 1) * COL_SIZE])
-    return(np.array(segments))
+    return (np.array(segments))
+
 
 def create_segmented_mfccs(X_train):
     '''
@@ -116,10 +125,10 @@ def create_segmented_mfccs(X_train):
     segmented_mfccs = []
     for mfcc in X_train:
         segmented_mfccs.append(segment_one(mfcc))
-    return(segmented_mfccs)
+    return (segmented_mfccs)
 
 
-def train_model(X_train,y_train,X_validation,y_validation, batch_size=128): #64
+def train_model(X_train, y_train, X_validation, y_validation, batch_size=128):  # 64
     '''
     Trains 2D convolutional neural network
     :param X_train: Numpy array of mfccs
@@ -136,21 +145,20 @@ def train_model(X_train,y_train,X_validation,y_validation, batch_size=128): #64
 
     # input image dimensions to feed into 2D ConvNet Input layer
     input_shape = (rows, cols, 1)
-    X_train = X_train.reshape(X_train.shape[0], rows, cols, 1 )
-    X_validation = X_validation.reshape(X_validation.shape[0],val_rows,val_cols,1)
-
+    X_train = X_train.reshape(X_train.shape[0], rows, cols, 1)
+    X_validation = X_validation.reshape(X_validation.shape[0], val_rows, val_cols, 1)
 
     print('X_train shape:', X_train.shape)
     print(X_train.shape[0], 'training samples')
 
     model = Sequential()
 
-    model.add(Conv2D(32, kernel_size=(3,3), activation='relu',
+    model.add(Conv2D(32, kernel_size=(3, 3), activation='relu',
                      data_format="channels_last",
                      input_shape=input_shape))
 
     model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Conv2D(64,kernel_size=(3,3), activation='relu'))
+    model.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.25))
 
@@ -178,9 +186,10 @@ def train_model(X_train,y_train,X_validation,y_validation, batch_size=128): #64
     model.fit_generator(datagen.flow(X_train, y_train, batch_size=batch_size),
                         steps_per_epoch=len(X_train) / 32
                         , epochs=EPOCHS,
-                        callbacks=[es,tb], validation_data=(X_validation,y_validation))
+                        callbacks=[es, tb], validation_data=(X_validation, y_validation))
 
     return (model)
+
 
 def save_model(model, model_filename):
     '''
@@ -192,10 +201,7 @@ def save_model(model, model_filename):
     model.save('../models/{}.h5'.format(model_filename))  # creates a HDF5 file 'my_model.h5'
 
 
-
 ############################################################
-
-
 
 
 #######################################
@@ -213,7 +219,6 @@ if __name__ == '__main__':
 
     # Load metadata
     df = pd.read_csv(file_name)
-
 
     # Filter metadata to retrieve only files desired
     filtered_df = getsplit.filter_df(df)
@@ -235,7 +240,6 @@ if __name__ == '__main__':
 
     # import ipdb;
     # ipdb.set_trace()
-
 
     acc_to_beat = test_count.most_common(1)[0][1] / float(np.sum(list(test_count.values())))
 
@@ -264,7 +268,7 @@ if __name__ == '__main__':
     X_train, _, y_train, _ = train_test_split(X_train, y_train, test_size=0)
 
     # Train model
-    model = train_model(np.array(X_train), np.array(y_train), np.array(X_validation),np.array(y_validation))
+    model = train_model(np.array(X_train), np.array(y_train), np.array(X_validation), np.array(y_validation))
 
     # Make predictions on full X_test MFCCs
     y_predicted = accuracy.predict_class_all(create_segmented_mfccs(X_test), model)
@@ -273,9 +277,9 @@ if __name__ == '__main__':
     print('Training samples:', train_count)
     print('Testing samples:', test_count)
     print('Accuracy to beat:', acc_to_beat)
-    print('Confusion matrix of total samples:\n', np.sum(accuracy.confusion_matrix(y_predicted, y_test),axis=1))
-    print('Confusion matrix:\n',accuracy.confusion_matrix(y_predicted, y_test))
-    print('Accuracy:', accuracy.get_accuracy(y_predicted,y_test))
+    print('Confusion matrix of total samples:\n', np.sum(accuracy.confusion_matrix(y_predicted, y_test), axis=1))
+    print('Confusion matrix:\n', accuracy.confusion_matrix(y_predicted, y_test))
+    print('Accuracy:', accuracy.get_accuracy(y_predicted, y_test))
 
     # Save model
     save_model(model, model_filename)
